@@ -9,6 +9,9 @@ Fixture manager for httpretty
 
 # TODO: Create issue about adding support for receiving server as parameter from decorator and getting `first_request`, `last_request`, and `requests`
 # TODO: Build a start/stop and __enter__/__exit__ for manual setup/teardown and `with` context management
+#   Never mind, we can prob skip `with` in the initial release
+# TODO: We should document that `latest_requests` is used for all of our request accessors
+#   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
 
 Getting Started
 ---------------
@@ -20,12 +23,7 @@ Install the module with: ``pip install httpretty_fixtures``
 
     # Set up our fixture manager
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
-        # TODO: Look up the URN that Python uses in ``urlparse``
-        __base_url__ = 'http://localhost:9200'
-
-        # TODO: Can we concatenate regexp's or do we have an annoying mess on our hands
-        # TODO: Otherwise, we will require passing in full URL here. Maybe with a `.format` for simplicity.
-        @httpretty_fixtures.get(re.compile('/my_index/my_document/my_id$'))
+        @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
         def es_index(self, request, uri, res_headers):
             return (200, res_headers, {
                 '_index': 'my_index',
