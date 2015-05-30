@@ -1,0 +1,4 @@
+*.pyc
+build/
+dist/
+httpretty_fixtures.egg-info

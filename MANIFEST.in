@@ -1,0 +1,2 @@
+recursive-include httpretty_fixtures *
+include *
