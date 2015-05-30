@@ -116,8 +116,45 @@ fixture_manager.stop()
 """"""""""""""""""""""
 Stop a running instance of HTTPretty. This should always be run at some point after a ``.start()``
 
-# TODO: We should document that `latest_requests` is used for all of our request accessors
-#   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
+httpretty_fixtures.{verb}(\*register_uri_args, \*\*register_uri_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Decorator to register a fixture function under an HTTP verb
+
+This is a summary for all possible HTTP verbs:
+
+.. code:: python
+    @httpretty_fixtures.get()
+    @httpretty_fixtures.put()
+    @httpretty_fixtures.post()
+    @httpretty_fixtures.delete()
+    @httpretty_fixtures.head()
+    @httpretty_fixtures.patch()
+    @httpretty_fixtures.options()
+    @httpretty_fixtures.connect()
+
+Each of these verbs functions passes its arguments/keyword arguments to ``HTTPretty's register_uri` function``.
+
+If there are any arguments you want to apply to your fixture with respect to ``HTTPretty``, this is how to do it.
+
+https://github.com/gabrielfalcao/HTTPretty
+
+httpretty_fixtures.first_request()
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alias to access the first request received by ``HTTPretty``.
+
+**Warning:** If you are using ``HTTPretty`` in other locations, then this will register those requests as well.
+
+httpretty_fixtures.last_request()
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alias to access the last request received by ``HTTPretty``.
+
+**Warning:** If you are using ``HTTPretty`` in other locations, then this will register those requests as well.
+
+httpretty_fixtures.requests()
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alias to access all request received by ``HTTPretty``.
+
+**Warning:** If you are using ``HTTPretty`` in other locations, then this will register those requests as well.
 
 Examples
 --------
