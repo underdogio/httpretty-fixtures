@@ -11,7 +11,7 @@ FakeServer = httpretty_fixtures.FixtureManager()
 
 
 @FakeServer.get('http://localhost:9000/')
-def hello(self, request, uri, res_headers):
+def hello(request, uri, res_headers):
     return (200, res_headers, 'world')
 
 
