@@ -12,7 +12,7 @@ Fixture manager for `httpretty`_
 - Reuse responses across tests
 - Allows maintaining state between requests
 
-  - See `Examples section for a demonstration <#preserving-state-between-requests>`_
+  - See the `Examples section for a demonstration <#preserving-state-between-requests>`_
 
 - Access past request information
 
