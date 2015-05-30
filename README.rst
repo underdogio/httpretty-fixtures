@@ -15,18 +15,16 @@ Install the module with: ``pip install httpretty_fixtures``
 
 .. code:: python
 
-    from httpretty import httpretty
-    from httpretty_fixtures import run
-    run()
+    import httpretty_fixtures
 
     # Set up our fixture manager
-    class FakeElasticsearch(FixtureManager):
+    class FakeElasticsearch(httpretty_fixtures.FixtureManager):
         # TODO: Look up the URN that Python uses in ``urlparse``
         __base_url__ = 'http://localhost:9200'
 
         # TODO: Can we concatenate regexp's or do we have an annoying mess on our hands
         # TODO: Otherwise, we will require passing in full URL here. Maybe with a `.format` for simplicity.
-        @get(re.compile('/my_index/my_document/my_id$'))
+        @httpretty_fixtures.get(re.compile('/my_index/my_document/my_id$'))
         def es_index(self, request, uri, res_headers):
             return (200, res_headers, {
                 '_index': 'my_index',
@@ -47,9 +45,10 @@ Install the module with: ``pip install httpretty_fixtures``
             self.assertEqual(res.json['_index'], 200)
 
             # Introspect our request received on `FakeElasticsearch`
-            self.assertEqual(httpretty.last_request().path, '/my_index/my_document/my_id')
-            self.assertEqual(len(httpretty.latest_requests), 1)
-            self.assertEqual(httpretty.latest_requests[0].path, '/my_index/my_document/my_id')
+            self.assertEqual(httpretty_fixtures.first_request.path, '/my_index/my_document/my_id')
+            self.assertEqual(httpretty_fixtures.last_request.path, '/my_index/my_document/my_id')
+            self.assertEqual(len(httpretty_fixtures.requests), 1)
+            self.assertEqual(httpretty_fixtures.requests[0].path, '/my_index/my_document/my_id')
 
 Documentation
 -------------
