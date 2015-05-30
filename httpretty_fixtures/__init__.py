@@ -107,51 +107,44 @@ class FixtureManager(object):
             HTTPretty.disable()
 
 
-# Define our helper registration methods
+# Define our registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
-_method_map = {
-    HTTPretty.GET: 'get',
-    HTTPretty.PUT: 'put',
-    HTTPretty.POST: 'post',
-    HTTPretty.DELETE: 'delete',
-    HTTPretty.HEAD: 'head',
-    HTTPretty.PATCH: 'patch',
-    HTTPretty.OPTIONS: 'options',
-    HTTPretty.CONNECT: 'connect',
-}
+def mark_fixture_function(fn, *register_uri_args, **register_uri_kwargs):
+    """
+    Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
 
-    def mark_fixture(cls, fn, *register_uri_args, **register_uri_kwargs):
-        """
-        Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
+    :param function fn: Function to use as our fixture
+    :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
+    :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
+    """
+    # Mark the fixture with our key and save its args/kwargs
+    fn._httpretty_fixtures_fixture = True
+    fn._httpretty_fixtures_args = register_uri_args
+    fn._httpretty_fixtures_kwargs = register_uri_kwargs
 
-        :param function fn: Function to use as our fixture
-        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
-        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
-        """
-        # Mark the fixture with our key and save its args/kwargs
-        fn._httpretty_fixtures_fixture = True
-        fn._httpretty_fixtures_args = register_uri_args
-        fn._httpretty_fixtures_kwargs = register_uri_kwargs
+    # Return our function
+    return fn
 
-        # Return our function
-        return fn
 
-for httpretty_method in HTTPretty.METHODS:
-    # Define a closure for our `httpretty_method`. Otherwise, it's a reference to `CONNECT` indefinitely
-    def _save_fixture_by_method(httpretty_method):
-        @classmethod
-        def save_fixture_by_method(cls, *register_uri_args, **register_uri_kwargs):
-            def save_fixture_by_method_decorator(fixture_fn):
-                # Register our URL under the fixture's name
-                cls.mark_fixture(fixture_fn, httpretty_method,
-                                 *register_uri_args, **register_uri_kwargs)
+def mark_fixture(*register_uri_args, **register_uri_kwargs):
+    """
+    Decorator wrapper for `mark_fixture_function`
 
-                # Return our function for reuse
-                return fixture_fn
+    :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
+    :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
+    """
+    def mark_fixture_decorator(fn):
+        # Process our function via `mark_fixture_function` and return it
+        return mark_fixture_function(fn, *register_uri_args, **register_uri_kwargs)
+    return mark_fixture_decorator
 
-            # Return our decorator
-            return save_fixture_by_method_decorator
-        # Return our closured method
-        return save_fixture_by_method
-    class_key = _method_map[httpretty_method]
-    setattr(FixtureManager, class_key, _save_fixture_by_method(httpretty_method))
+
+# Define helper registration methods for each HTTP verb
+get = functools.partial(mark_fixture, HTTPretty.GET)
+put = functools.partial(mark_fixture, HTTPretty.PUT)
+post = functools.partial(mark_fixture, HTTPretty.POST)
+delete = functools.partial(mark_fixture, HTTPretty.DELETE)
+head = functools.partial(mark_fixture, HTTPretty.HEAD)
+patch = functools.partial(mark_fixture, HTTPretty.PATCH)
+options = functools.partial(mark_fixture, HTTPretty.OPTIONS)
+connect = functools.partial(mark_fixture, HTTPretty.CONNECT)
