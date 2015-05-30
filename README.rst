@@ -7,12 +7,15 @@ httpretty-fixtures
 
 Fixture manager for httpretty
 
+# TODO: Create issue about adding support for receiving server as parameter from decorator and getting `first_request`, `last_request`, and `requests`
+
 Getting Started
 ---------------
 Install the module with: ``pip install httpretty_fixtures``
 
 .. code:: python
 
+    from httpretty import httpretty
     from httpretty_fixtures import run
     run()
 
@@ -38,8 +41,15 @@ Install the module with: ``pip install httpretty_fixtures``
         @FakeElasticsearch.run(['es_index'])
         def test_retrieve_from_es(self):
             """Verify we can retrieve an item from Elasticsearch"""
+            # Make our request and verify we hit Elasticsearch
             res = requests('http://localhost:9200/my_index/my_document/my_id')
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.json['_index'], 200)
 
+            # Introspect our request received on `FakeElasticsearch`
+            self.assertEqual(httpretty.last_request().path, '/my_index/my_document/my_id')
+            self.assertEqual(len(httpretty.latest_requests), 1)
+            self.assertEqual(httpretty.latest_requests[0].path, '/my_index/my_document/my_id')
 
 Documentation
 -------------
