@@ -4,15 +4,18 @@ from httpretty import httpretty
 
 # Define our class
 class FixtureManager(object):
+    # Store a per-class set of fixtures (changes between inherited instances)
+    # https://docs.python.org/2/tutorial/classes.html#private-variables-and-class-local-references
+    __fixtures = {}
+
     @classmethod
     def run(cls, fixtures):
         """
-        Decorator factory to enable HTTP fixtures for test case
-
-            @run(['es_index'])
+        Decorator to start up `httpretty` with a set of fixtures
 
         :param list fixtures: Names of fixtures to load onto `httpretty`
         """
+        # If we can't iterate over our fixtures, complain and leave
         if not hasattr(fixtures, '__iter__'):
             raise TypeError('Expected `fixtures` to be an iterable sequence but it was not. '
                             'Please make it a list or a tuple.')
@@ -21,8 +24,8 @@ class FixtureManager(object):
 
         # Define our decorator
         # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L1023-L1032
-        def decorate_callable(test):
-            @functools.wraps(test)
+        def decorate_callable(fn):
+            @functools.wraps(fn)
             def wrapper(self, *args, **kwargs):
                 # Reset past fixtures
                 httpretty.reset()
@@ -37,15 +40,35 @@ class FixtureManager(object):
                 # Save http_fixtures to `self`
                 self.http_fixtures = http_fixtures
 
-                # Run our test and always cleanup
+                # Run our fn and always cleanup
                 try:
-                    return test(self, *args, **kwargs)
+                    return fn(self, *args, **kwargs)
                 finally:
                     httpretty.disable()
             return wrapper
         return decorate_callable
 
-# Define our registration methods
+    @classmethod
+    def save_fixture(cls, name, *register_uri_args, **register_uri_kwargs):
+        """
+        Save a fixture to our class for usage later on
+
+        :param str name: Key to store fixture under
+        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
+        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
+        """
+        # If there already is a fixture, complain
+        if name in cls.__fixtures:
+            raise RuntimeError('Key "{name}" already exists in fixtures for `httpretty-fixtures`'.format(name=name))
+
+        # Otherwise, save our fixture
+        cls.__fixtures[name] = {
+            'args': register_uri_args,
+            'kwargs': register_uri_kwargs,
+        }
+
+
+# Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
 _method_map = {
     'GET': 'get',

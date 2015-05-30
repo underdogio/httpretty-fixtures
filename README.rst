@@ -13,6 +13,8 @@ Fixture manager for httpretty
 # TODO: We should document that `latest_requests` is used for all of our request accessors
 #   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
 # TODO: Provide an example where we preserve state via `__init__`. Be sure to call super there.
+# TODO: Assert that 2 separate FixtureManager's don't share the same fixture store
+#   https://docs.python.org/2/tutorial/classes.html#private-variables-and-class-local-references
 
 Getting Started
 ---------------
