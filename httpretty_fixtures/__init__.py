@@ -71,6 +71,7 @@ class FixtureManager(object):
             raise RuntimeError('Key "{name}" already exists in fixtures for `httpretty-fixtures`'.format(name=name))
 
         # Otherwise, save our fixture
+        print 'saving fixture', name, register_uri_args, register_uri_kwargs
         self._fixtures[name] = {
             'args': register_uri_args,
             'kwargs': register_uri_kwargs,
