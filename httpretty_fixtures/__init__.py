@@ -115,5 +115,19 @@ _method_map = {
     HTTPretty.CONNECT: 'connect',
 }
 for httpretty_method in HTTPretty.METHODS:
+        def save_fixture_by_method(cls, *register_uri_args, **register_uri_kwargs):
+            def save_fixture_by_method_decorator(fixture_fn):
+                # Register our URL under the fixture's name
+                body = fixture_fn
+                self.mark_fixture(fixture_fn, httpretty_method,
+                                  *register_uri_args, body=body, **register_uri_kwargs)
+
+                # Return our function for reuse
+                return fixture_fn
+
+            # Return our decorator
+            return save_fixture_by_method_decorator
+        # Return our closured method
+        return save_fixture_by_method
     class_key = _method_map[httpretty_method]
-    setattr(FixtureManager, class_key, functools.partial(FixtureManager.mark_fixture, httpretty_method))
+    setattr(FixtureManager, class_key, _save_fixture_by_method(httpretty_method))
