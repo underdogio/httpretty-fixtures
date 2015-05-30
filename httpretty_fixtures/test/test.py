@@ -28,4 +28,26 @@ class TestHttprettyFixtures(TestCase):
         self.assertEqual(res.text, 'world')
 
         # Assert we have information in our requests
-        # self.assertEqual(
+        self.assertEqual(httpretty_fixtures.first_request().path, '/')
+        self.assertEqual(httpretty_fixtures.last_request().path, '/')
+        self.assertEqual(len(httpretty_fixtures.requests()), 1)
+        self.assertEqual(httpretty_fixtures.requests()[0].path, '/')
+
+    @FakeServer.run(['hello'])
+    def test_multiple_request(self):
+        """
+        Multiple requests to a running FixtureManager
+            separates requests
+        """
+        # Make our request
+        res = requests.get('http://localhost:9000/?first')
+        self.assertEqual(res.status_code, 200)
+        res = requests.get('http://localhost:9000/?second')
+        self.assertEqual(res.status_code, 200)
+
+        # Assert we have information in our requests
+        self.assertEqual(httpretty_fixtures.first_request().path, '/?first')
+        self.assertEqual(httpretty_fixtures.last_request().path, '/?second')
+        self.assertEqual(len(httpretty_fixtures.requests()), 2)
+        self.assertEqual(httpretty_fixtures.requests()[0].path, '/?first')
+        self.assertEqual(httpretty_fixtures.requests()[1].path, '/?second')

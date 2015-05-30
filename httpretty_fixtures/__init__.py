@@ -63,8 +63,9 @@ class FixtureManager(object):
         # Increase our internal counter
         cls.nested_count += 1
 
-        # If HTTPretty hasn't been started yet, then reset its info start it
+        # If HTTPretty hasn't been started yet, then reset its info and start it
         if not HTTPretty.is_enabled():
+            HTTPretty.reset()
             HTTPretty.enable()
 
         # Initialize our class
@@ -148,3 +149,24 @@ head = functools.partial(mark_fixture, HTTPretty.HEAD)
 patch = functools.partial(mark_fixture, HTTPretty.PATCH)
 options = functools.partial(mark_fixture, HTTPretty.OPTIONS)
 connect = functools.partial(mark_fixture, HTTPretty.CONNECT)
+
+
+# Create aliases for httpretty's requests
+def first_request():
+    """Retreive the first request encountered by HTTPretty"""
+    # If there is at least 1 request, return the first one
+    if HTTPretty.latest_requests:
+        return HTTPretty.latest_requests[0]
+
+
+def last_request():
+    """Retreive the last request encountered by HTTPretty"""
+    # If there is at least 1 request, return the last one
+    latest_requests = HTTPretty.latest_requests
+    if latest_requests:
+        return latest_requests[len(latest_requests) - 1]
+
+
+def requests():
+    """Retrieve all requests encountered by HTTPretty"""
+    return HTTPretty.latest_requests
