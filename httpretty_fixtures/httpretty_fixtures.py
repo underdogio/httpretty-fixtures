@@ -4,26 +4,6 @@ from httpretty import httpretty
 
 # Define our class
 class FixtureManager(object):
-    # Define our registration methods
-    # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
-    _method_map = {
-        'GET': 'get',
-        'PUT': 'put',
-        'POST': 'post',
-        'DELETE': 'delete',
-        'HEAD': 'head',
-        'PATCH': 'patch',
-        'OPTIONS': 'options',
-    }
-    for httpretty_method in httpretty.METHODS:
-        @classmethod
-        def save_fixture_decorator(cls, *register_uri_args, **register_uri_kwargs):
-            # TODO: Deal with decorator logic
-            def save_fixture_decorator_fn():
-                httpretty.register_uri(httpretty_method, *register_uri_args, **register_uri_kwargs)
-        class_key = _method_map[httpretty_method]
-        setattr(FixtureManager, class_key, save_fixture_decorator)
-
     @classmethod
     def run(cls, fixtures):
         """
@@ -65,3 +45,24 @@ class FixtureManager(object):
             return wrapper
         return decorate_callable
 
+# Define our registration methods
+# https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
+_method_map = {
+    'GET': 'get',
+    'PUT': 'put',
+    'POST': 'post',
+    'DELETE': 'delete',
+    'HEAD': 'head',
+    'PATCH': 'patch',
+    'OPTIONS': 'options',
+}
+for httpretty_method in httpretty.METHODS:
+    @classmethod
+    def save_fixture_decorator(cls, fixture_fn, *register_uri_args, **register_uri_kwargs):
+        # Register our URL under the fixture's name
+        cls.save_fixture(fixture_fn.__name__, httpretty_method, *register_uri_args, **register_uri_kwargs)
+
+        # Return our function for reuse
+        return fixture_fn
+    class_key = _method_map[httpretty_method]
+    setattr(FixtureManager, class_key, save_fixture_decorator)
