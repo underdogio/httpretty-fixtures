@@ -108,25 +108,23 @@ class FixtureManager(object):
         if cls.nested_count == 0:
             HTTPretty.disable()
 
+
 # Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
-_method_map = {
-    'GET': 'get',
-    'PUT': 'put',
-    'POST': 'post',
-    'DELETE': 'delete',
-    'HEAD': 'head',
-    'PATCH': 'patch',
-    'OPTIONS': 'options',
-}
-for httpretty_method in HTTPretty.METHODS:
-    @classmethod
-    def save_fixture_by_method(cls, fixture_fn, *register_uri_args, **register_uri_kwargs):
+def get_fixture_method(httpretty_method):
+    """Helper to easily generate per-method fixture bindings"""
+    def save_fixture_by_method(fixture_fn, *register_uri_args, **register_uri_kwargs):
         # Register our URL under the fixture's name
         body = fixture_fn
         cls.save_fixture(fixture_fn.__name__, httpretty_method, *register_uri_args, body=body, **register_uri_kwargs)
 
         # Return our function for reuse
         return fixture_fn
-    class_key = _method_map[httpretty_method]
-    setattr(FixtureManager, class_key, save_fixture_by_method)
+get = get_fixture_method(HTTPretty.GET)
+put = get_fixture_method(HTTPretty.PUT)
+post = get_fixture_method(HTTPretty.POST)
+delete = get_fixture_method(HTTPretty.DELETE)
+head = get_fixture_method(HTTPretty.HEAD)
+patch = get_fixture_method(HTTPretty.PATCH)
+options = get_fixture_method(HTTPretty.OPTIONS)
+connect = get_fixture_method(HTTPretty.CONNECT)
