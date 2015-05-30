@@ -12,6 +12,7 @@ Fixture manager for httpretty
 #   Never mind, we can prob skip `with` in the initial release
 # TODO: We should document that `latest_requests` is used for all of our request accessors
 #   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
+# TODO: Provide an example where we preserve state via `__init__`. Be sure to call super there.
 
 Getting Started
 ---------------
@@ -19,6 +20,7 @@ Install the module with: ``pip install httpretty_fixtures``
 
 .. code:: python
 
+    # Load in our dependencies
     import httpretty_fixtures
 
     # Set up our fixture manager
