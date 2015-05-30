@@ -8,6 +8,7 @@ httpretty-fixtures
 Fixture manager for httpretty
 
 # TODO: Create issue about adding support for receiving server as parameter from decorator and getting `first_request`, `last_request`, and `requests`
+# TODO: Build a start/stop and __enter__/__exit__ for manual setup/teardown and `with` context management
 
 Getting Started
 ---------------
