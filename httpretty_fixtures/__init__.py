@@ -19,7 +19,7 @@ class FixtureManager(object):
         :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
         """
         # Mark the fixture with our key and save its args/kwargs
-        fn._httpretty_fixtures_fn = True
+        fn._httpretty_fixtures_fixture = True
         fn._httpretty_fixtures_args = register_uri_args
         fn._httpretty_fixtures_kwargs = register_uri_kwargs
 
@@ -75,7 +75,7 @@ class FixtureManager(object):
     # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L1023-L1032
     # https://github.com/spulec/moto/blob/0.4.2/moto/core/models.py#L32-L65
     @classmethod
-    def start(cls):
+    def start(cls, fixtures):
         """Start running this class' fixtures"""
         # Increase our internal counter
         cls.nested_count += 1
@@ -84,14 +84,21 @@ class FixtureManager(object):
         if not HTTPretty.is_enabled():
             HTTPretty.enable()
 
-        # For each of our class methods
-        for attr_key in cls.__dict__:
-            attr = getattr(cls, attr_key)
+        # Initialize our class
+        instance = cls()
+
+        # For each of our fixtures
+        for fixture in fixtures:
+            # Retrieve our fixture
+            attr = getattr(instance, fixture)
 
             # If it is function and is marked as a fixture, register it
-            if attr and hasattr(attr, '__call__') and attr._httpretty_fixtures_fn is True:
+            if attr and hasattr(attr, '__call__') and attr._httpretty_fixtures_fixture is True:
+                # Update the fixture to know about `self`
                 fixture = attr
-                HTTPretty.register_uri(*fixture._httpretty_fixtures_args, **fixture._httpretty_fixtures_kwargs)
+                contextual_fixture = functools.partial(fixture)
+                HTTPretty.register_uri(*contextual_fixture._httpretty_fixtures_args, body=contextual_fixture,
+                                       **contextual_fixture._httpretty_fixtures_kwargs)
 
     @classmethod
     def stop(cls):
