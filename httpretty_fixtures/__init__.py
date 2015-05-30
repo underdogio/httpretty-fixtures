@@ -10,23 +10,6 @@ class FixtureManager(object):
     nested_count = 0
 
     @classmethod
-    def mark_fixture(cls, fn, *register_uri_args, **register_uri_kwargs):
-        """
-        Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
-
-        :param function fn: Function to use as our fixture
-        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
-        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
-        """
-        # Mark the fixture with our key and save its args/kwargs
-        fn._httpretty_fixtures_fixture = True
-        fn._httpretty_fixtures_args = register_uri_args
-        fn._httpretty_fixtures_kwargs = register_uri_kwargs
-
-        # Return our function
-        return fn
-
-    @classmethod
     def run(cls, fixtures):
         """
         Decorator to start up `httpretty` with a set of fixtures
@@ -42,13 +25,8 @@ class FixtureManager(object):
         # `fixtures` is `['hello']`
         # We are initially executing `FakeElasticsearch.run(['hello'])` as if were a function
 
-        # If we can't iterate over our fixtures, complain and leave
-        if not hasattr(fixtures, '__iter__'):
-            raise TypeError('Expected `fixtures` to be an iterable sequence but it was not. '
-                            'Please make it a list or a tuple.')
-
-        # Process our
-        # This is the second stage where the `@` of the decorator runs over `test_request_hello`
+        # Process our function being decorated
+        #   This is the second stage where the `@` of the decorator runs over `test_request_hello`
         #   i.e. `decorate_fn(test_request_hello)`
         def decorate_fn(fn):
             # Wrap our normal function with before/after pieces
@@ -77,6 +55,11 @@ class FixtureManager(object):
     @classmethod
     def start(cls, fixtures):
         """Start running this class' fixtures"""
+        # If we can't iterate over our fixtures, complain and leave
+        if not hasattr(fixtures, '__iter__'):
+            raise TypeError('Expected `fixtures` to be an iterable sequence but it was not. '
+                            'Please make it a list or a tuple.')
+
         # Increase our internal counter
         cls.nested_count += 1
 
@@ -88,17 +71,25 @@ class FixtureManager(object):
         instance = cls()
 
         # For each of our fixtures
-        for fixture in fixtures:
+        for fixture_key in fixtures:
             # Retrieve our fixture
-            attr = getattr(instance, fixture)
+            fixture = getattr(instance, fixture_key)
 
-            # If it is function and is marked as a fixture, register it
-            if attr and hasattr(attr, '__call__') and attr._httpretty_fixtures_fixture is True:
-                # Update the fixture to know about `self`
-                fixture = attr
-                contextual_fixture = functools.partial(fixture)
-                HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=contextual_fixture,
-                                       **fixture._httpretty_fixtures_kwargs)
+            # If it is not a function, complain and leave
+            if not fixture or not hasattr(fixture, '__call__'):
+                raise RuntimeError('Expected fixture "{fixture}" to be a function but it was not.'
+                                   .format(fixture=fixture))
+
+            # If it is not marked as a fixture
+            if fixture._httpretty_fixtures_fixture is not True:
+                raise RuntimeError('Expected fixture "{fixture}" to be marked as a fixture. '
+                                   'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
+                                   .format(fixture=fixture))
+
+            # Update the fixture to know about `self`
+            contextual_fixture = functools.partial(fixture)
+            HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=contextual_fixture,
+                                   **fixture._httpretty_fixtures_kwargs)
 
     @classmethod
     def stop(cls):
@@ -128,6 +119,23 @@ _method_map = {
     HTTPretty.OPTIONS: 'options',
     HTTPretty.CONNECT: 'connect',
 }
+
+    def mark_fixture(cls, fn, *register_uri_args, **register_uri_kwargs):
+        """
+        Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
+
+        :param function fn: Function to use as our fixture
+        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
+        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
+        """
+        # Mark the fixture with our key and save its args/kwargs
+        fn._httpretty_fixtures_fixture = True
+        fn._httpretty_fixtures_args = register_uri_args
+        fn._httpretty_fixtures_kwargs = register_uri_kwargs
+
+        # Return our function
+        return fn
+
 for httpretty_method in HTTPretty.METHODS:
     # Define a closure for our `httpretty_method`. Otherwise, it's a reference to `CONNECT` indefinitely
     def _save_fixture_by_method(httpretty_method):
