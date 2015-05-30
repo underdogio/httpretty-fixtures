@@ -18,8 +18,10 @@ Install the module with: ``pip install httpretty_fixtures``
 .. code:: python
 
     # Load in our dependencies
-    import httpretty_fixtures
     import json
+    import unittest
+
+    import httpretty_fixtures
 
 
     # Set up our fixture manager
