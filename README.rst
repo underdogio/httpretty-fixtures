@@ -28,18 +28,21 @@ Install the module with: ``pip install httpretty_fixtures``
 
     # Load in our dependencies
     import httpretty_fixtures
+    import json
+
 
     # Set up our fixture manager
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
         @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
         def es_index(self, request, uri, res_headers):
-            return (200, res_headers, {
+            return (200, res_headers, json.dumps({
                 '_index': 'my_index',
                 '_type': 'my_document',
                 '_id': 'my_id',
                 '_version': 1,
                 'found': True,
-            })
+            }))
+
 
     # Define our tests
     class MyTestCase(unittest.TestCase):
