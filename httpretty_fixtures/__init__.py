@@ -56,7 +56,7 @@ class FixtureManager(object):
             @functools.wraps(fn)
             def wrapper(that_self, *args, **kwargs):
                 # Start our class
-                cls.start()
+                cls.start(fixtures)
 
                 # Run our fn and always cleanup
                 try:
@@ -97,8 +97,8 @@ class FixtureManager(object):
                 # Update the fixture to know about `self`
                 fixture = attr
                 contextual_fixture = functools.partial(fixture)
-                HTTPretty.register_uri(*contextual_fixture._httpretty_fixtures_args, body=contextual_fixture,
-                                       **contextual_fixture._httpretty_fixtures_kwargs)
+                HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=contextual_fixture,
+                                       **fixture._httpretty_fixtures_kwargs)
 
     @classmethod
     def stop(cls):
@@ -135,9 +135,8 @@ for httpretty_method in HTTPretty.METHODS:
         def save_fixture_by_method(cls, *register_uri_args, **register_uri_kwargs):
             def save_fixture_by_method_decorator(fixture_fn):
                 # Register our URL under the fixture's name
-                body = fixture_fn
                 cls.mark_fixture(fixture_fn, httpretty_method,
-                                 *register_uri_args, body=body, **register_uri_kwargs)
+                                 *register_uri_args, **register_uri_kwargs)
 
                 # Return our function for reuse
                 return fixture_fn
