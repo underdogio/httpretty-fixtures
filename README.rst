@@ -11,7 +11,9 @@ Fixture manager for `httpretty`_
 
 - Reuse responses across tests
 - Allows maintaining state between requests
-    - See Examples section for a demonstration: :ref:`state-between-requests`
+
+  - See Examples section for a demonstration: :ref:`state-between-requests`
+
 - Access past request information
 
 This was written to solve communicating to an Elasticsearch during tests. For our usage, ``mock`` didn't scale well and placing `httpretty`_ fixtures on our base test case was impratical. To solve this, we wrote a fixture manager, ``httpretty-fixtures``.
@@ -66,8 +68,8 @@ Documentation
 -------------
 ``httpretty-fixtures`` exports ``FixtureManager``, ``get``, ``put``, ``post``, ``delete``, ``head``, ``patch``, ``options``, ``connect``, ``first_request``, ``last_request``, and ``requests`` as methods/variables. We will refer to the package as ``httpretty_fixtures``.
 
-FixtureManager
-^^^^^^^^^^^^^^
+FixtureManager()
+^^^^^^^^^^^^^^^^
 Class for setting up a set of fixtures on. This should be inherited from into another class with its own set of fixtures.
 
 .. code:: python
@@ -77,6 +79,42 @@ Class for setting up a set of fixtures on. This should be inherited from into an
             return (200, res_headers, json.dumps({'content': 'goes here'}))
 
 
+fixture_manager.run(fixtures)
+"""""""""""""""""""""""""""""
+Decorator to run a set of fixtures during a function
+
+- fixtures `list` - Names of fixture functions to run
+
+  - \* `str` - Name of fixtures function to run
+
+.. code:: python
+    class FakeElasticsearch(httpretty_fixtures.FixtureManager):
+        @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
+        def es_index(self, request, uri, res_headers):
+            return (200, res_headers, json.dumps({}))
+
+    class MyTestCase(unittest.TestCase):
+        # The `es_index` fixture will be live for all of this test case
+        @FakeElasticsearch.run(['es_index'])
+        def test_retrieve_from_es(self):
+            """Verify we can retrieve an item from Elasticsearch"""
+            # Make our request and verify we hit Elasticsearch
+            res = requests.get('http://localhost:9200/my_index/my_document/my_id')
+
+fixture_manager.start(fixtures)
+"""""""""""""""""""""""""""""""
+Start running HTTPretty with a set of fixtures
+
+- fixtures `list` - Names of fixture functions to run
+
+  - \* `str` - Name of fixtures function to run
+
+
+This will run HTTPretty indefinitely until ``.stop()`` is run
+
+fixture_manager.stop()
+""""""""""""""""""""""
+Stop a running instance of HTTPretty. This should always be run at some point after a ``.start()``
 
 # TODO: We should document that `latest_requests` is used for all of our request accessors
 #   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
