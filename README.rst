@@ -85,9 +85,9 @@ fixture_manager.run(fixtures)
 """""""""""""""""""""""""""""
 Decorator to run a set of fixtures during a function
 
-- fixtures `list` - Names of fixture functions to run
+- fixtures ``list`` - Names of fixture functions to run
 
-  - \* `str` - Name of fixtures function to run
+  - \* ``str`` - Name of fixtures function to run
 
 .. code:: python
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
@@ -107,9 +107,9 @@ fixture_manager.start(fixtures)
 """""""""""""""""""""""""""""""
 Start running HTTPretty with a set of fixtures
 
-- fixtures `list` - Names of fixture functions to run
+- fixtures ``list`` - Names of fixture functions to run
 
-  - \* `str` - Name of fixtures function to run
+  - \* ``str`` - Name of fixtures function to run
 
 
 This will run HTTPretty indefinitely until ``.stop()`` is run
