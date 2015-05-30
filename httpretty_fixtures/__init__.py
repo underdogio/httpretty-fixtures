@@ -119,14 +119,14 @@ class FixtureManager(object):
 # Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
 _method_map = {
-    'GET': 'get',
-    'PUT': 'put',
-    'POST': 'post',
-    'DELETE': 'delete',
-    'HEAD': 'head',
-    'PATCH': 'patch',
-    'OPTIONS': 'options',
-    'CONNECT': 'connect',
+    HTTPretty.GET: 'get',
+    HTTPretty.PUT: 'put',
+    HTTPretty.POST: 'post',
+    HTTPretty.DELETE: 'delete',
+    HTTPretty.HEAD: 'head',
+    HTTPretty.PATCH: 'patch',
+    HTTPretty.OPTIONS: 'options',
+    HTTPretty.CONNECT: 'connect',
 }
 for httpretty_method in HTTPretty.METHODS:
     # Define a closure for our `httpretty_method`. Otherwise, it's a reference to `CONNECT` indefinitely
