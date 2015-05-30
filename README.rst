@@ -66,7 +66,9 @@ Install the module with: ``pip install httpretty_fixtures``
 
 Documentation
 -------------
-``httpretty-fixtures`` exports ``FixtureManager``, ``get``, ``put``, ``post``, ``delete``, ``head``, ``patch``, ``options``, ``connect``, ``first_request``, ``last_request``, and ``requests`` as methods/variables. We will refer to the package as ``httpretty_fixtures``.
+``httpretty-fixtures`` exports ``FixtureManager``, ``get``, ``put``, ``post``, ``delete``, ``head``, ``patch``, ``options``, ``connect``, ``first_request``, ``last_request``, and ``requests`` as methods/variables.
+
+We will refer to the package as ``httpretty_fixtures``.
 
 FixtureManager()
 ^^^^^^^^^^^^^^^^
@@ -158,7 +160,6 @@ Alias to access all request received by ``HTTPretty``.
 
 Examples
 --------
-
 Preserving state between requests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In this example, we will count between multiple requests to indicate that state is being preserved.
@@ -198,8 +199,6 @@ In this example, we will count between multiple requests to indicate that state 
             res = requests.get('http://localhost:9000/')
             self.assertEqual(res.status_code, 200)
             self.assertEqual(res.text, '2')
-
-# TODO: Make sure we use the ref from Getting Started
 
 Contributing
 ------------
