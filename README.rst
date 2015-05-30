@@ -7,6 +7,13 @@ httpretty-fixtures
 
 Fixture manager for `httpretty`_
 
+**Features:**
+
+- Reuse responses across tests
+- Allows maintaining state between requests
+    - See Examples section for a demonstration: :ref:`state-between-requests`
+- Access past request information
+
 This was written to solve communicating to an Elasticsearch during tests. For our usage, ``mock`` didn't scale well and placing `httpretty`_ fixtures on our base test case was impratical. To solve this, we wrote a fixture manager, ``httpretty-fixtures``.
 
 .. _`httpretty`: https://github.com/gabrielfalcao/HTTPretty
@@ -54,9 +61,23 @@ Install the module with: ``pip install httpretty_fixtures``
             self.assertEqual(len(httpretty_fixtures.requests()), 1)
             self.assertEqual(httpretty_fixtures.requests()[0].path, '/my_index/my_document/my_id')
 
+
 Documentation
 -------------
-_(Coming soon)_
+``httpretty-fixtures`` exports ``FixtureManager``, ``get``, ``put``, ``post``, ``delete``, ``head``, ``patch``, ``options``, ``connect``, ``first_request``, ``last_request``, and ``requests`` as methods/variables. We will refer to the package as ``httpretty_fixtures``.
+
+FixtureManager
+^^^^^^^^^^^^^^
+Class for setting up a set of fixtures on. This should be inherited from into another class with its own set of fixtures.
+
+.. code:: python
+    class FakeElasticsearch(httpretty_fixtures.FixtureManager):
+        @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
+        def es_index(self, request, uri, res_headers):
+            return (200, res_headers, json.dumps({'content': 'goes here'}))
+
+
+
 # TODO: We should document that `latest_requests` is used for all of our request accessors
 #   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
 
@@ -64,6 +85,7 @@ Examples
 --------
 _(Coming soon)_
 # TODO: Provide an example where we preserve state via `__init__`. Be sure to call super there.
+#    Make sure we use the ref from Getting Started
 
 Contributing
 ------------
