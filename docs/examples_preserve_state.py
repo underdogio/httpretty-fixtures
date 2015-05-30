@@ -9,7 +9,7 @@ import requests
 class CounterServer(httpretty_fixtures.FixtureManager):
     def __init__(self):
         self.count = 0
-        super(CounterServer).__init__(self)
+        super(CounterServer, self).__init__()
 
     @httpretty_fixtures.get('http://localhost:9000/')
     def counter(self, request, uri, res_headers):
