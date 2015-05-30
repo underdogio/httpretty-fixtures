@@ -34,7 +34,7 @@ class TestHttprettyFixtures(TestCase):
         self.assertEqual(httpretty_fixtures.requests()[0].path, '/')
 
     @FakeServer.run(['hello'])
-    def test_multiple_request(self):
+    def test_multiple_requests(self):
         """
         Multiple requests to a running FixtureManager
             separates requests

@@ -9,14 +9,10 @@ Fixture manager for `httpretty`_
 
 This was written to solve communicating to an Elasticsearch during tests. For our usage, ``mock`` didn't scale well and placing `httpretty`_ fixtures on our base test case was impratical. To solve this, we wrote a fixture manager, ``httpretty-fixtures``.
 
-# TODO: Create issue about adding support for receiving server as parameter from decorator and getting `first_request`, `last_request`, and `requests`
-# TODO: Build a start/stop and __enter__/__exit__ for manual setup/teardown and `with` context management
-#   Never mind, we can prob skip `with` in the initial release
+# TODO: Create issue about adding support for receiving server as parameter from decorator, retrieving fixtures from said instance, getting `first_request`, `last_request`, and `requests` on an instance basis
 # TODO: We should document that `latest_requests` is used for all of our request accessors
 #   and document that if `httpretty` is being used in any other variation, then those requests will appear there as well
 # TODO: Provide an example where we preserve state via `__init__`. Be sure to call super there.
-# TODO: Assert that 2 separate FixtureManager's don't share the same fixture store
-#   https://docs.python.org/2/tutorial/classes.html#private-variables-and-class-local-references
 
 .. _`httpretty`: https://github.com/gabrielfalcao/HTTPretty
 
