@@ -5,6 +5,9 @@ import requests
 
 from httpretty_fixtures import FixtureManager
 
+# TODO: The API is still fucky. We don't have context for `self` anywhere...
+# TODO: Is this even possible? Maybe we need to generate an instance outside and then extend it somehow?
+
 
 # Set up multiple fixture managers
 class FakeServer(FixtureManager):

@@ -10,7 +10,7 @@ class FixtureManager(object):
     nested_count = 0
 
     @classmethod
-    def mark_fixture(self, fn, *register_uri_args, **register_uri_kwargs):
+    def mark_fixture(cls, fn, *register_uri_args, **register_uri_kwargs):
         """
         Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
 
@@ -26,7 +26,8 @@ class FixtureManager(object):
         # Return our function
         return fn
 
-    def run(self, fixtures):
+    @classmethod
+    def run(cls, fixtures):
         """
         Decorator to start up `httpretty` with a set of fixtures
 
@@ -34,10 +35,10 @@ class FixtureManager(object):
         """
         # For helping with logic, here is an example of what every part is
         # @FakeElasticsearch.run(['hello'])
-        # def test_request_hello(self, arg1, arg2):
+        # def test_request_hello(cls, arg1, arg2):
         #   pass
 
-        # `self` is `FakeElasticsearch`
+        # `cls` is `FakeElasticsearch`
         # `fixtures` is `['hello']`
         # We are initially executing `FakeElasticsearch.run(['hello'])` as if were a function
 
@@ -55,13 +56,13 @@ class FixtureManager(object):
             @functools.wraps(fn)
             def wrapper(that_self, *args, **kwargs):
                 # Start our class
-                self.start()
+                cls.start()
 
                 # Run our fn and always cleanup
                 try:
                     return fn(that_self, *args, **kwargs)
                 finally:
-                    self.stop()
+                    cls.stop()
 
             # Return our wrapped function
             #   i.e. `test_request_hello` with some before/after logic (of start/stop)
@@ -73,54 +74,63 @@ class FixtureManager(object):
 
     # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L1023-L1032
     # https://github.com/spulec/moto/blob/0.4.2/moto/core/models.py#L32-L65
-    def start(self):
+    @classmethod
+    def start(cls):
         """Start running this class' fixtures"""
         # Increase our internal counter
-        self.nested_count += 1
+        cls.nested_count += 1
 
         # If HTTPretty hasn't been started yet, then reset its info start it
         if not HTTPretty.is_enabled():
             HTTPretty.enable()
 
-        # For each of our fixtures, bind them
-        for name in self._fixtures:
-            fixture = self._fixtures[name]
-            HTTPretty.register_uri(*fixture['args'], **fixture['kwargs'])
+        # For each of our class methods
+        for attr_key in cls.__dict__:
+            attr = getattr(cls, attr_key)
 
-    def stop(self):
+            # If it is function and is marked as a fixture, register it
+            if attr and hasattr(attr, '__call__') and attr._httpretty_fixtures_fn is True:
+                fixture = attr
+                HTTPretty.register_uri(*fixture._httpretty_fixtures_args, **fixture._httpretty_fixtures_kwargs)
+
+    @classmethod
+    def stop(cls):
         """Stop running this class' fixtures"""
         # Decrease our counter
-        self.nested_count -= 1
+        cls.nested_count -= 1
 
         # If we have stopped running too many times, complain and leave
-        if self.nested_count < 0:
+        if cls.nested_count < 0:
             raise RuntimeError('When running `httpretty-fixtures`, `stop()`'
                                'was run more times than (or before) `start()`')
 
         # If we have gotten out of nesting, then stop HTTPretty and
-        if self.nested_count == 0:
+        if cls.nested_count == 0:
             HTTPretty.disable()
 
 
 # Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
 _method_map = {
-    HTTPretty.GET: 'get',
-    HTTPretty.PUT: 'put',
-    HTTPretty.POST: 'post',
-    HTTPretty.DELETE: 'delete',
-    HTTPretty.HEAD: 'head',
-    HTTPretty.PATCH: 'patch',
-    HTTPretty.OPTIONS: 'options',
-    HTTPretty.CONNECT: 'connect',
+    'GET': 'get',
+    'PUT': 'put',
+    'POST': 'post',
+    'DELETE': 'delete',
+    'HEAD': 'head',
+    'PATCH': 'patch',
+    'OPTIONS': 'options',
+    'CONNECT': 'connect',
 }
 for httpretty_method in HTTPretty.METHODS:
+    # Define a closure for our `httpretty_method`. Otherwise, it's a reference to `CONNECT` indefinitely
+    def _save_fixture_by_method(httpretty_method):
+        @classmethod
         def save_fixture_by_method(cls, *register_uri_args, **register_uri_kwargs):
             def save_fixture_by_method_decorator(fixture_fn):
                 # Register our URL under the fixture's name
                 body = fixture_fn
-                self.mark_fixture(fixture_fn, httpretty_method,
-                                  *register_uri_args, body=body, **register_uri_kwargs)
+                cls.mark_fixture(fixture_fn, httpretty_method,
+                                 *register_uri_args, body=body, **register_uri_kwargs)
 
                 # Return our function for reuse
                 return fixture_fn
