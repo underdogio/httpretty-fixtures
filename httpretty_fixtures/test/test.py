@@ -3,16 +3,14 @@ from unittest import TestCase
 
 import requests
 
-import httpretty_fixtures
+from httpretty_fixtures import FixtureManager
 
 
 # Set up multiple fixture managers
-FakeServer = httpretty_fixtures.FixtureManager()
-
-
-@FakeServer.get('http://localhost:9000/')
-def hello(request, uri, res_headers):
-    return (200, res_headers, 'world')
+class FakeServer(FixtureManager):
+    @FixtureManager.get('http://localhost:9000/')
+    def hello(self, request, uri, res_headers):
+        return (200, res_headers, 'world')
 
 
 class TestHttprettyFixtures(TestCase):
