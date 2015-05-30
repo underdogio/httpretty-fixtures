@@ -1,5 +1,8 @@
 # Load in our dependencies
 from unittest import TestCase
+
+import requests
+
 import httpretty_fixtures
 
 
@@ -19,4 +22,5 @@ class TestHttprettyFixtures(TestCase):
         A request to a non-existant server behind a running FixtureManager
             receives a response from FixtureManager
         """
-        self.assertTrue(bool(httpretty_fixtures.run))
+        res = requests.get('http://localhost:9000/')
+        print res.status_code

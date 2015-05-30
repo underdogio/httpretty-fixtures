@@ -6,12 +6,12 @@ from httpretty import HTTPretty
 
 # Define our class
 class FixtureManager(object):
-    # Store a count for HTTPretty
+    # Store a count for HTTPretty across all classes
     nested_count = 0
 
-    # Store a per-class set of fixtures (changes between inherited instances)
-    # https://docs.python.org/2/tutorial/classes.html#private-variables-and-class-local-references
-    __fixtures = {}
+    def __init__(self):
+        # Create a store for our fixtures
+        self._fixtures = {}
 
     def run(self, fixtures):
         """
@@ -40,13 +40,13 @@ class FixtureManager(object):
             # Wrap our normal function with before/after pieces
             #   `functools.wraps` transfers internals like `__name__` and `__doc__`
             @functools.wraps(fn)
-            def wrapper(self, *args, **kwargs):
+            def wrapper(that_self, *args, **kwargs):
                 # Start our class
                 self.start()
 
                 # Run our fn and always cleanup
                 try:
-                    return fn(self, *args, **kwargs)
+                    return fn(that_self, *args, **kwargs)
                 finally:
                     self.stop()
 
@@ -67,11 +67,11 @@ class FixtureManager(object):
         :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
         """
         # If there already is a fixture, complain
-        if name in self.__fixtures:
+        if name in self._fixtures:
             raise RuntimeError('Key "{name}" already exists in fixtures for `httpretty-fixtures`'.format(name=name))
 
         # Otherwise, save our fixture
-        self.__fixtures[name] = {
+        self._fixtures[name] = {
             'args': register_uri_args,
             'kwargs': register_uri_kwargs,
         }
@@ -88,8 +88,8 @@ class FixtureManager(object):
             HTTPretty.enable()
 
         # For each of our fixtures, bind them
-        for name in self.__fixtures:
-            fixture = self.__fixtures[name]
+        for name in self._fixtures:
+            fixture = self._fixtures[name]
             HTTPretty.register_uri(*fixture['args'], **fixture['kwargs'])
 
     def stop(self):
@@ -105,6 +105,7 @@ class FixtureManager(object):
         # If we have gotten out of nesting, then stop HTTPretty and
         if self.nested_count == 0:
             HTTPretty.disable()
+
 
 # Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
