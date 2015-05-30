@@ -158,9 +158,12 @@ Alias to access all request received by ``HTTPretty``.
 
 Examples
 --------
+Preserving state between requests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _(Coming soon)_
 # TODO: Provide an example where we preserve state via `__init__`. Be sure to call super there.
-#    Make sure we use the ref from Getting Started
+
+# TODO: Make sure we use the ref from Getting Started
 
 Contributing
 ------------
