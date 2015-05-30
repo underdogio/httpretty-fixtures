@@ -9,6 +9,23 @@ class FixtureManager(object):
     # Store a count for HTTPretty across all classes
     nested_count = 0
 
+    @classmethod
+    def mark_fixture(self, fn, *register_uri_args, **register_uri_kwargs):
+        """
+        Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
+
+        :param function fn: Function to use as our fixture
+        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
+        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
+        """
+        # Mark the fixture with our key and save its args/kwargs
+        fn._httpretty_fixtures_fn = True
+        fn._httpretty_fixtures_args = register_uri_args
+        fn._httpretty_fixtures_kwargs = register_uri_kwargs
+
+        # Return our function
+        return fn
+
     def run(self, fixtures):
         """
         Decorator to start up `httpretty` with a set of fixtures
@@ -54,19 +71,6 @@ class FixtureManager(object):
         #  i.e. `decorator_fn` to process `test_request_hello`
         return decorate_fn
 
-    def mark_fixture(self, fn, *register_uri_args, **register_uri_kwargs):
-        """
-        Mark a function as a fixture and save its register_uri_args and register_uri_kwargs
-
-        :param function fn: Function to use as our fixture
-        :param *args register_uri_args: Arguments to pass through to `httpretty.register_uri`
-        :param **kwargs register_uri_kwargs: Keyword arguments to pass through to `httpretty.register_uri`
-        """
-        # Mark the fixture with our key and save its args/kwargs
-        fn._httpretty_fixtures_fn = True
-        fn._httpretty_fixtures_args = register_uri_args
-        fn._httpretty_fixtures_kwargs = register_uri_kwargs
-
     # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L1023-L1032
     # https://github.com/spulec/moto/blob/0.4.2/moto/core/models.py#L32-L65
     def start(self):
@@ -100,12 +104,16 @@ class FixtureManager(object):
 
 # Define our helper registration methods
 # https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/http.py#L112-L121
-
-get = FixtureManager.HTTPretty.GET
-put = FixtureManager.HTTPretty.PUT
-post = FixtureManager.HTTPretty.POST
-delete = FixtureManager.HTTPretty.DELETE
-head = FixtureManager.HTTPretty.HEAD
-patch = FixtureManager.HTTPretty.PATCH
-options = FixtureManager.HTTPretty.OPTIONS
-connect = FixtureManager.HTTPretty.CONNECT
+_method_map = {
+    HTTPretty.GET: 'get',
+    HTTPretty.PUT: 'put',
+    HTTPretty.POST: 'post',
+    HTTPretty.DELETE: 'delete',
+    HTTPretty.HEAD: 'head',
+    HTTPretty.PATCH: 'patch',
+    HTTPretty.OPTIONS: 'options',
+    HTTPretty.CONNECT: 'connect',
+}
+for httpretty_method in HTTPretty.METHODS:
+    class_key = _method_map[httpretty_method]
+    setattr(FixtureManager, class_key, functools.partial(FixtureManager.mark_fixture, httpretty_method))
