@@ -12,7 +12,7 @@ Fixture manager for `httpretty`_
 - Reuse responses across tests
 - Allows maintaining state between requests
 
-  - See Examples section for a demonstration: :ref:`state-between-requests`
+  - See Examples section for a demonstration: :ref:`preserving-state-example`
 
 - Access past request information
 
@@ -158,6 +158,9 @@ Alias to access all request received by ``HTTPretty``.
 
 Examples
 --------
+
+.. _preserving-state-example:
+
 Preserving state between requests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In this example, we will count between multiple requests to indicate that state is being preserved.
