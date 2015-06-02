@@ -32,6 +32,13 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.text, '2')
 
+    @CounterServer.run(['counter'])
+    def test_counter_alternate_state(self):
+        """Verify state is not maintained between separate `FixtureManager.run()'s`"""
+        res = requests.get('http://localhost:9000/')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.text, '1')
+
 
 # Run our tests
 if __name__ == '__main__':
