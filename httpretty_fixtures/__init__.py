@@ -85,7 +85,7 @@ class FixtureManager(object):
             if fixture._httpretty_fixtures_fixture is not True:
                 raise RuntimeError('Expected fixture "{fixture}" to be marked as a fixture. '
                                    'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
-                                   .format(fixture=fixture))
+                                   .format(fixture=fixture_key))
 
             # Update the fixture to know about `self`
             contextual_fixture = functools.partial(fixture)
