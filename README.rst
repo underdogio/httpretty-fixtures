@@ -196,7 +196,7 @@ Alias to access the last request received by ``HTTPretty``.
 
 httpretty_fixtures.requests()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Alias to access all request received by ``HTTPretty``.
+Alias to access all requests received by ``HTTPretty``.
 
 **Warning:** If you are using ``HTTPretty`` in other locations, then this will register those requests as well.
 
