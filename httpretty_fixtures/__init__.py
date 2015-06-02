@@ -79,7 +79,7 @@ class FixtureManager(object):
             # If it is not a function, complain and leave
             if not fixture or not hasattr(fixture, '__call__'):
                 raise RuntimeError('Expected fixture "{fixture}" to be a function but it was not.'
-                                   .format(fixture=fixture))
+                                   .format(fixture=fixture_key))
 
             # If it is not marked as a fixture
             if fixture._httpretty_fixtures_fixture is not True:

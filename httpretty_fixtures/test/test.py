@@ -64,7 +64,7 @@ class TestHttprettyFixtures(TestCase):
         self.assertEqual(httpretty_fixtures.requests()[0].path, '/?first')
         self.assertEqual(httpretty_fixtures.requests()[1].path, '/?second')
 
-    @CounterServer.run(['count'])
+    @CounterServer.run(['counter'])
     def test_state_preserved(self):
         """
         Multiple stateful requests to a running FixtureManager
@@ -80,7 +80,7 @@ class TestHttprettyFixtures(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.text, '2')
 
-    @CounterServer.run(['count'])
+    @CounterServer.run(['counter'])
     def test_state_disjoint(self):
         """
         A separately running FixtureManager
