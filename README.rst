@@ -75,6 +75,7 @@ FixtureManager()
 Class for setting up a set of fixtures on. This should be inherited from into another class with its own set of fixtures.
 
 .. code:: python
+
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
         @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
         def es_index(self, request, uri, res_headers):
@@ -90,6 +91,7 @@ Decorator to run a set of fixtures during a function
   - \* ``str`` - Name of fixtures function to run
 
 .. code:: python
+
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
         @httpretty_fixtures.get('http://localhost:9200/my_index/my_document/my_id')
         def es_index(self, request, uri, res_headers):
