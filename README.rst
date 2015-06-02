@@ -170,17 +170,26 @@ The signature is as follows:
 - request_handler ``function`` - Handler for our request callback
 - self ``object`` - Instance of class extended on top of for ``FixtureManager``
 - uri ``object`` - Information about incoming request
-    - Structure is managed by ``httpretty``
-    - More info can be read from the source code
-        - https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L615-L647
+
+  - Structure is managed by ``httpretty``
+  - More info can be read from the source code
+
+    - https://github.com/gabrielfalcao/HTTPretty/blob/0.8.3/httpretty/core.py#L615-L647
+
 - res_headers ``object`` - Default response headers to provide to request
-    - These should be modified and/or passed through in the `res_tuple`
+
+  - These should be modified and/or passed through in the `res_tuple`
+
 - res_tuple ``tuple`` - Collection of information for our response
-    - [0] ``int`` - Status code to provide for response
-        - For example, 200 would be a 200 HTTP status code
-    - [1] ``object`` - Modified or provided set of headers provided as a parameter
-    - [2] ``str`` - Response body for our request
-        - In the example above, we replied with ``'Hello World!'`` but this could be JSON, XML, or whatever you need
+
+  - [0] ``int`` - Status code to provide for response
+
+    - For example, 200 would be a 200 HTTP status code
+
+  - [1] ``object`` - Modified or provided set of headers provided as a parameter
+  - [2] ``str`` - Response body for our request
+
+    - In the example above, we replied with ``'Hello World!'`` but this could be JSON, XML, or whatever you need
 
 httpretty_fixtures.first_request()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
