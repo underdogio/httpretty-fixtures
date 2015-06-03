@@ -34,9 +34,12 @@ class FixtureManager(object):
             @functools.wraps(fn)
             def wrapper(that_self, *args, **kwargs):
                 # Start our class
-                cls.start(fixtures)
+                server = cls.start(fixtures)
 
                 # Run our fn and always cleanup
+                # DEV: We use same function signature as `mock.patch` meaning we append to `args`
+                #   https://github.com/calvinchengx/python-mock/blob/5f551e96f48a61fad7617df0d284e003a3eb9a90/mock.py#L1220-L1224
+                args += (server,)
                 try:
                     return fn(that_self, *args, **kwargs)
                 finally:
@@ -87,10 +90,37 @@ class FixtureManager(object):
                                    'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
                                    .format(fixture=fixture_key))
 
-            # Update the fixture to know about `self`
-            contextual_fixture = functools.partial(fixture)
-            HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=contextual_fixture,
+            # Wrap our fixture to save request information
+            @functools.wraps(fixture)
+            def saving_fixture(request, *args, **kwargs):
+                # If this is the first request, save it
+                if saving_fixture.first_request is None:
+                    saving_fixture.first_request = request
+
+                # Save the last request
+                saving_fixture.last_request = request
+
+                # Add our request onto the stack
+                saving_fixture.requests.append(request)
+
+                # Return our normal function
+                return fixture(request, *args, **kwargs)
+
+            # Define default information
+            saving_fixture.first_request = None
+            saving_fixture.last_request = None
+            saving_fixture.requests = []
+
+            # Save our new fixture on the instance itself
+            # DEV: This prevents leaking out to the class' methods
+            setattr(instance, fixture_key, saving_fixture)
+
+            # Bind our fixture
+            HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=saving_fixture,
                                    **fixture._httpretty_fixtures_kwargs)
+
+        # Return our generated server
+        return instance
 
     @classmethod
     def stop(cls):

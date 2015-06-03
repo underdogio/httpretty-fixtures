@@ -22,18 +22,30 @@ class FakeElasticsearch(httpretty_fixtures.FixtureManager):
 # Define our tests
 class MyTestCase(unittest.TestCase):
     @FakeElasticsearch.run(['es_index'])
-    def test_retrieve_from_es(self):
+    def test_retrieve_from_es(self, fake_elasticsearch):
         """Verify we can retrieve an item from Elasticsearch"""
         # Make our request and verify we hit Elasticsearch
-        res = requests.get('http://localhost:9200/my_index/my_document/my_id')
+        res = requests.get('http://localhost:9200/my_index/my_document/my_id?first')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['_index'], 'my_index')
 
+        # Make a second request for demonstration purposes
+        requests.get('http://localhost:9200/my_index/my_document/my_id?second')
+
         # Introspect our request received on `FakeElasticsearch`
-        self.assertEqual(httpretty_fixtures.first_request().path, '/my_index/my_document/my_id')
-        self.assertEqual(httpretty_fixtures.last_request().path, '/my_index/my_document/my_id')
-        self.assertEqual(len(httpretty_fixtures.requests()), 1)
-        self.assertEqual(httpretty_fixtures.requests()[0].path, '/my_index/my_document/my_id')
+        fixture = fake_elasticsearch.es_index
+        self.assertEqual(fixture.first_request.path, '/my_index/my_document/my_id?first')
+        self.assertEqual(fixture.last_request.path, '/my_index/my_document/my_id?second')
+        self.assertEqual(len(fixture.requests), 2)
+        self.assertEqual(fixture.requests[0].path, '/my_index/my_document/my_id?first')
+        self.assertEqual(fixture.requests[1].path, '/my_index/my_document/my_id?second')
+
+        # Access request information from all `httpretty` requests
+        self.assertEqual(httpretty_fixtures.first_request().path, '/my_index/my_document/my_id?first')
+        self.assertEqual(httpretty_fixtures.last_request().path, '/my_index/my_document/my_id?second')
+        self.assertEqual(len(httpretty_fixtures.requests()), 2)
+        self.assertEqual(httpretty_fixtures.requests()[0].path, '/my_index/my_document/my_id?first')
+        self.assertEqual(httpretty_fixtures.requests()[1].path, '/my_index/my_document/my_id?second')
 
 
 # Run our tests

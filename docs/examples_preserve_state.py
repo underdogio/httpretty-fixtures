@@ -20,7 +20,7 @@ class CounterServer(httpretty_fixtures.FixtureManager):
 # Define our tests
 class MyTestCase(unittest.TestCase):
     @CounterServer.run(['counter'])
-    def test_counter_state(self):
+    def test_counter_state(self, counter_server):
         """Verify we can preserve state between requests"""
         # Make our first request and verify its count
         res = requests.get('http://localhost:9000/')
@@ -33,7 +33,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res.text, '2')
 
     @CounterServer.run(['counter'])
-    def test_counter_alternate_state(self):
+    def test_counter_alternate_state(self, counter_server):
         """Verify state is not maintained between separate `FixtureManager.run()'s`"""
         res = requests.get('http://localhost:9000/')
         self.assertEqual(res.status_code, 200)

@@ -16,6 +16,9 @@ Fixture manager for `httpretty`_
 
 - Access past request information
 
+  - On per-fixture basis
+  - Across all fixtures
+
 This was written to solve communicating to an Elasticsearch during tests. For our usage, ``mock`` didn't scale well and placing `httpretty`_ fixtures on our base test case was impratical. To solve this, we wrote a fixture manager, ``httpretty-fixtures``.
 
 .. _`httpretty`: https://github.com/gabrielfalcao/HTTPretty
@@ -50,19 +53,30 @@ Install the module with: ``pip install httpretty_fixtures``
     # Define our tests
     class MyTestCase(unittest.TestCase):
         @FakeElasticsearch.run(['es_index'])
-        def test_retrieve_from_es(self):
+        def test_retrieve_from_es(self, fake_elasticsearch):
             """Verify we can retrieve an item from Elasticsearch"""
             # Make our request and verify we hit Elasticsearch
-            res = requests.get('http://localhost:9200/my_index/my_document/my_id')
+            res = requests.get('http://localhost:9200/my_index/my_document/my_id?first')
             self.assertEqual(res.status_code, 200)
             self.assertEqual(res.json()['_index'], 'my_index')
 
-            # Introspect our request received on `FakeElasticsearch`
-            self.assertEqual(httpretty_fixtures.first_request().path, '/my_index/my_document/my_id')
-            self.assertEqual(httpretty_fixtures.last_request().path, '/my_index/my_document/my_id')
-            self.assertEqual(len(httpretty_fixtures.requests()), 1)
-            self.assertEqual(httpretty_fixtures.requests()[0].path, '/my_index/my_document/my_id')
+            # Make a second request for demonstration purposes
+            requests.get('http://localhost:9200/my_index/my_document/my_id?second')
 
+            # Introspect our request received on `FakeElasticsearch`
+            fixture = fake_elasticsearch.es_index
+            self.assertEqual(fixture.first_request.path, '/my_index/my_document/my_id?first')
+            self.assertEqual(fixture.last_request.path, '/my_index/my_document/my_id?second')
+            self.assertEqual(len(fixture.requests), 2)
+            self.assertEqual(fixture.requests[0].path, '/my_index/my_document/my_id?first')
+            self.assertEqual(fixture.requests[1].path, '/my_index/my_document/my_id?second')
+
+            # Access request information from all `httpretty` requests
+            self.assertEqual(httpretty_fixtures.first_request().path, '/my_index/my_document/my_id?first')
+            self.assertEqual(httpretty_fixtures.last_request().path, '/my_index/my_document/my_id?second')
+            self.assertEqual(len(httpretty_fixtures.requests()), 2)
+            self.assertEqual(httpretty_fixtures.requests()[0].path, '/my_index/my_document/my_id?first')
+            self.assertEqual(httpretty_fixtures.requests()[1].path, '/my_index/my_document/my_id?second')
 
 Documentation
 -------------
@@ -90,6 +104,8 @@ Decorator to run a set of fixtures during a function
 
   - \* ``str`` - Name of fixtures function to run
 
+We will pass in the server instance as an argument to the decorated function. From the server, we can `access per-instance fixture information and requests <#function-attributes>`_.
+
 .. code:: python
 
     class FakeElasticsearch(httpretty_fixtures.FixtureManager):
@@ -100,7 +116,7 @@ Decorator to run a set of fixtures during a function
     class MyTestCase(unittest.TestCase):
         # The `es_index` fixture will be live for all of this test case
         @FakeElasticsearch.run(['es_index'])
-        def test_retrieve_from_es(self):
+        def test_retrieve_from_es(self, fake_elasticsearch):
             """Verify we can retrieve an item from Elasticsearch"""
             # Make our request and verify we hit Elasticsearch
             res = requests.get('http://localhost:9200/my_index/my_document/my_id')
@@ -113,8 +129,11 @@ Start running HTTPretty with a set of fixtures
 
   - \* ``str`` - Name of fixtures function to run
 
+**Returns:**
 
-This will run HTTPretty indefinitely until ``.stop()`` is run
+- Returns a running instance of ``fixture_manager``. This can be used to `access fixtures and their request information <#function-attributes>`_.
+
+``.start()`` will run HTTPretty indefinitely until ``.stop()`` is called.
 
 fixture_manager.stop()
 """"""""""""""""""""""
@@ -193,6 +212,34 @@ The signature is as follows:
 
     - In the example above, we replied with ``'Hello World!'`` but this could be JSON, XML, or whatever you need
 
+Function attributes
+"""""""""""""""""""
+``httpretty_fixtures`` provides helper properties to access past request information. For the sake of reference, we will refer to a fixture as ``fixture``
+
+- ``fixture.first_request`` - Accesses first request received by fixture in our ``.run()`` current instance
+
+  - If no request was received, then this will be ``None``
+
+- ``fixture.last_request`` - Accesses last request received by fixture in our ``.run()`` current instance
+
+  - If no request was received, then this will be ``None``
+
+- ``fixture.requests`` - List of all requests received by our fixture
+
+A ``fixture`` should be accessible via the returned server from our ``.run()`` decorator or ``.start()``
+
+.. code:: python
+
+    class MyTestCase(unittest.TestCase):
+        # The `es_index` fixture will be live for all of this test case
+        @FakeElasticsearch.run(['es_index'])
+        def test_retrieve_from_es(self, fake_elasticsearch):
+            # Access our `fixture` and its properties
+            fake_elasticsearch.es_index
+            fake_elasticsearch.es_index.first_request
+            fake_elasticsearch.es_index.last_request
+            fake_elasticsearch.es_index.requests
+
 httpretty_fixtures.first_request()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Alias to access the first request received by ``HTTPretty``.
@@ -241,7 +288,7 @@ In this example, we will count between multiple requests to indicate that state 
     # Define our tests
     class MyTestCase(unittest.TestCase):
         @CounterServer.run(['counter'])
-        def test_counter_state(self):
+        def test_counter_state(self, counter_server):
             """Verify we can preserve state between requests"""
             # Make our first request and verify its count
             res = requests.get('http://localhost:9000/')
@@ -254,7 +301,7 @@ In this example, we will count between multiple requests to indicate that state 
             self.assertEqual(res.text, '2')
 
         @CounterServer.run(['counter'])
-        def test_counter_alternate_state(self):
+        def test_counter_alternate_state(self, counter_server):
             """Verify state is not maintained between separate `FixtureManager.run()'s`"""
             res = requests.get('http://localhost:9000/')
             self.assertEqual(res.status_code, 200)
