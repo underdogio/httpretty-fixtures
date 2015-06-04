@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='httpretty_fixtures',
-    version='1.0.2',
+    version='2.0.0',
     description='Fixture manager for httpretty',
     long_description=open('README.rst').read(),
     keywords=[
