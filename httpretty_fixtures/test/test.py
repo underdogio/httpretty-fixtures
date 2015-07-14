@@ -12,6 +12,10 @@ class FakeServer(httpretty_fixtures.FixtureManager):
     def hello(self, request, uri, res_headers):
         return (200, res_headers, 'world')
 
+    @httpretty_fixtures.get('http://localhost:9000/goodbye')
+    def goodbye(self, request, uri, res_headers):
+        return (200, res_headers, 'moon')
+
 
 class CounterServer(httpretty_fixtures.FixtureManager):
     def __init__(self):
@@ -79,6 +83,42 @@ class TestHttprettyFixtures(TestCase):
         self.assertEqual(len(fixture.requests), 2)
         self.assertEqual(fixture.requests[0].path, '/?first')
         self.assertEqual(fixture.requests[1].path, '/?second')
+
+    @FakeServer.run(['hello', 'goodbye'])
+    def test_multiple_fixtures_requests(self, fake_server):
+        """
+        Requests to a running FixtureManager for different fixtures
+            receive response from appropriate endpoint
+            collects separate requests
+        """
+        # Make our requests
+        res1 = requests.get('http://localhost:9000/?first')
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res1.text, 'world')
+
+        res2 = requests.get('http://localhost:9000/goodbye?second')
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res2.text, 'moon')
+
+        # Assert we have information in our requests from `httpretty` context
+        self.assertEqual(httpretty_fixtures.first_request().path, '/?first')
+        self.assertEqual(httpretty_fixtures.last_request().path, '/goodbye?second')
+        self.assertEqual(len(httpretty_fixtures.requests()), 2)
+        self.assertEqual(httpretty_fixtures.requests()[0].path, '/?first')
+        self.assertEqual(httpretty_fixtures.requests()[1].path, '/goodbye?second')
+
+        # Assert we have information in our requests from fixture context
+        fixture1 = fake_server.hello
+        self.assertEqual(fixture1.first_request.path, '/?first')
+        self.assertEqual(fixture1.last_request.path, '/?first')
+        self.assertEqual(len(fixture1.requests), 1)
+        self.assertEqual(fixture1.requests[0].path, '/?first')
+
+        fixture2 = fake_server.goodbye
+        self.assertEqual(fixture2.first_request.path, '/goodbye?second')
+        self.assertEqual(fixture2.last_request.path, '/goodbye?second')
+        self.assertEqual(len(fixture2.requests), 1)
+        self.assertEqual(fixture2.requests[0].path, '/goodbye?second')
 
     @CounterServer.run(['counter'])
     def test_state_preserved(self, counter_server):

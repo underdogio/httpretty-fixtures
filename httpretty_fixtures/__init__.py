@@ -74,53 +74,62 @@ class FixtureManager(object):
         # Initialize our class
         instance = cls()
 
-        # For each of our fixtures
+        # Start each of our fixtures
+        # DEV: We must use a separate function to closure `fixture` to prevent reuse in loops
         for fixture_key in fixtures:
-            # Retrieve our fixture
-            fixture = getattr(instance, fixture_key)
-
-            # If it is not a function, complain and leave
-            if not fixture or not hasattr(fixture, '__call__'):
-                raise RuntimeError('Expected fixture "{fixture}" to be a function but it was not.'
-                                   .format(fixture=fixture_key))
-
-            # If it is not marked as a fixture
-            if fixture._httpretty_fixtures_fixture is not True:
-                raise RuntimeError('Expected fixture "{fixture}" to be marked as a fixture. '
-                                   'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
-                                   .format(fixture=fixture_key))
-
-            # Wrap our fixture to save request information
-            @functools.wraps(fixture)
-            def saving_fixture(request, *args, **kwargs):
-                # If this is the first request, save it
-                if saving_fixture.first_request is None:
-                    saving_fixture.first_request = request
-
-                # Save the last request
-                saving_fixture.last_request = request
-
-                # Add our request onto the stack
-                saving_fixture.requests.append(request)
-
-                # Return our normal function
-                return fixture(request, *args, **kwargs)
-
-            # Define default information
-            saving_fixture.first_request = None
-            saving_fixture.last_request = None
-            saving_fixture.requests = []
-
-            # Save our new fixture on the instance itself
-            # DEV: This prevents leaking out to the class' methods
-            setattr(instance, fixture_key, saving_fixture)
-
-            # Bind our fixture
-            HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=saving_fixture,
-                                   **fixture._httpretty_fixtures_kwargs)
+            instance.start_fixture(fixture_key)
 
         # Return our generated server
         return instance
+
+    def start_fixture(self, fixture_key):
+        """
+        Begin an instance-bound fixture on this instance on HTTPretty
+
+        :param str fixture_key: Name of fixture to start
+        """
+        # Retrieve our fixture
+        fixture = getattr(self, fixture_key)
+
+        # If it is not a function, complain and leave
+        if not fixture or not hasattr(fixture, '__call__'):
+            raise RuntimeError('Expected fixture "{fixture}" to be a function but it was not.'
+                               .format(fixture=fixture_key))
+
+        # If it is not marked as a fixture
+        if fixture._httpretty_fixtures_fixture is not True:
+            raise RuntimeError('Expected fixture "{fixture}" to be marked as a fixture. '
+                               'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
+                               .format(fixture=fixture_key))
+
+        # Wrap our fixture to save request information
+        @functools.wraps(fixture)
+        def saving_fixture(request, *args, **kwargs):
+            # If this is the first request, save it
+            if saving_fixture.first_request is None:
+                saving_fixture.first_request = request
+
+            # Save the last request
+            saving_fixture.last_request = request
+
+            # Add our request onto the stack
+            saving_fixture.requests.append(request)
+
+            # Return our normal function
+            return fixture(request, *args, **kwargs)
+
+        # Define default information
+        saving_fixture.first_request = None
+        saving_fixture.last_request = None
+        saving_fixture.requests = []
+
+        # Save our new fixture on the instance itself
+        # DEV: This prevents leaking out to the class' methods
+        setattr(self, fixture_key, saving_fixture)
+
+        # Bind our fixture
+        HTTPretty.register_uri(*fixture._httpretty_fixtures_args, body=saving_fixture,
+                               **fixture._httpretty_fixtures_kwargs)
 
     @classmethod
     def stop(cls):
