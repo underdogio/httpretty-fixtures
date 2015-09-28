@@ -10,6 +10,39 @@ class FixtureManager(object):
     nested_count = 0
 
     @classmethod
+    def generate_saving_fixture(cls, fixture):
+        """
+        Wrap a fixture function with saving functionality
+
+        :param function fixture: Fixture to add saving to
+        :rtype: function
+        :return: `fixture` with wrapped saving (e.g. saves `first_request`)
+        """
+        # Wrap our fixture to save request information
+        @functools.wraps(fixture)
+        def saving_fixture(request, *args, **kwargs):
+            # If this is the first request, save it
+            if saving_fixture.first_request is None:
+                saving_fixture.first_request = request
+
+            # Save the last request
+            saving_fixture.last_request = request
+
+            # Add our request onto the stack
+            saving_fixture.requests.append(request)
+
+            # Return our normal function
+            return fixture(request, *args, **kwargs)
+
+        # Define default information
+        saving_fixture.first_request = None
+        saving_fixture.last_request = None
+        saving_fixture.requests = []
+
+        # Return our saving fixture
+        return saving_fixture
+
+    @classmethod
     def run(cls, fixtures):
         """
         Decorator to start up `httpretty` with a set of fixtures
@@ -102,26 +135,8 @@ class FixtureManager(object):
                                'Please invoke `_httpretty_fixtures.mark_fixture` before using `.run()`/`.start()`'
                                .format(fixture=fixture_key))
 
-        # Wrap our fixture to save request information
-        @functools.wraps(fixture)
-        def saving_fixture(request, *args, **kwargs):
-            # If this is the first request, save it
-            if saving_fixture.first_request is None:
-                saving_fixture.first_request = request
-
-            # Save the last request
-            saving_fixture.last_request = request
-
-            # Add our request onto the stack
-            saving_fixture.requests.append(request)
-
-            # Return our normal function
-            return fixture(request, *args, **kwargs)
-
-        # Define default information
-        saving_fixture.first_request = None
-        saving_fixture.last_request = None
-        saving_fixture.requests = []
+        # Generate our saving fixture
+        saving_fixture = self.generate_saving_fixture(fixture)
 
         # Save our new fixture on the instance itself
         # DEV: This prevents leaking out to the class' methods
