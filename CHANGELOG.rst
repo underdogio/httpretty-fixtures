@@ -1,5 +1,7 @@
 httpretty-fixtures changelog
 ============================
+2.1.0 - Relocated `saving_fixture` generation to `generate_saving_fixture` classmethod
+
 2.0.1 - Repaired requests leaking between fixtures
 
 2.0.0 - Added per-fixture request information
