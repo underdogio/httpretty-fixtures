@@ -1,6 +1,7 @@
 # Load in our dependencies
 from unittest import TestCase
 
+import httpretty
 import requests
 
 import httpretty_fixtures
@@ -146,3 +147,30 @@ class TestHttprettyFixtures(TestCase):
         res = requests.get('http://localhost:9000/')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.text, '1')
+
+    def test_nesting(self):
+        """
+        When nesting calls to FixtureManager.start
+            we keep HTTPretty enabled until the last FixtureManager is stopped
+        """
+        # We have not started yet
+        self.assertEqual(httpretty.is_enabled(), False)
+
+        # Start one manager, we get a `nested_count = 1`
+        CounterServer.start(['counter'])
+        self.assertEqual(httpretty.is_enabled(), True)
+
+        # Start a second manager, we get a `nested_count = 2`
+        FakeServer.start(['hello'])
+        self.assertEqual(httpretty.is_enabled(), True)
+
+        # We stop the second manager, which gets us `nested_count = 1`
+        # As well, HTTPretty should still be running
+        FakeServer.stop()
+        self.assertTrue(httpretty.is_enabled())
+
+        # We stop our last manager, which gives us `nested_count = 0`
+        CounterServer.stop()
+
+        # We finally stop HTTPretty since the last fixture manager is stopped
+        self.assertFalse(httpretty.is_enabled())
