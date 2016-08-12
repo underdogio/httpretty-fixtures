@@ -8,6 +8,8 @@ from httpretty import HTTPretty
 class FixtureManager(object):
     # Store a count for HTTPretty across all classes
     nested_count = 0
+    # Whether or not we should disable HTTPretty when all FixtureManagers are stopped
+    disable_when_done = True
 
     @classmethod
     def generate_saving_fixture(cls, fixture):
@@ -96,6 +98,11 @@ class FixtureManager(object):
             raise TypeError('Expected `fixtures` to be an iterable sequence but it was not. '
                             'Please make it a list or a tuple.')
 
+        # Keep track if HTTPretty was started outside of FixtureManager
+        #   This means that we should not auto-disable HTTPretty when nested_count returns to 0
+        if FixtureManager.nested_count == 0:
+            FixtureManager.disable_when_done = not HTTPretty.is_enabled()
+
         # Increase our internal counter
         # DEV: Keep count on our base class so the `nested_count` is "global" for all subclasses
         FixtureManager.nested_count += 1
@@ -159,7 +166,8 @@ class FixtureManager(object):
                                'was run more times than (or before) `start()`')
 
         # If we have gotten out of nesting, then stop HTTPretty and
-        if FixtureManager.nested_count == 0:
+        # DEV: Only disable HTTPretty if it was started outside of FixtureManager
+        if FixtureManager.nested_count == 0 and FixtureManager.disable_when_done:
             HTTPretty.disable()
 
 
