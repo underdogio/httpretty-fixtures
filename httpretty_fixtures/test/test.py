@@ -174,3 +174,26 @@ class TestHttprettyFixtures(TestCase):
 
         # We finally stop HTTPretty since the last fixture manager is stopped
         self.assertFalse(httpretty.is_enabled())
+
+    def test_httpretty_enabled_outside_fixture_manager(self):
+        """
+        When HTTPretty was started outside of FixtureManager
+            we do not disable HTTPretty when the last FixtureManager is stopped
+        """
+        # Start HTTPretty manually
+        httpretty.enable()
+        self.assertEqual(httpretty.is_enabled(), True)
+
+        # Start one of our FixtureManagers
+        FakeServer.start(['hello'])
+        self.assertEqual(FakeServer.httpretty_enabled_at_start, True)
+        self.assertEqual(httpretty.is_enabled(), True)
+
+        # Stop out FixtureManger and ensure HTTPretty is still running
+        FakeServer.stop()
+        self.assertEqual(FakeServer.nested_count, 0)
+        self.assertEqual(httpretty.is_enabled(), True)
+
+        # Disable HTTPretty manually and ensure it is stopped
+        httpretty.disable()
+        self.assertEqual(httpretty.is_enabled(), False)
