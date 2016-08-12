@@ -97,7 +97,8 @@ class FixtureManager(object):
                             'Please make it a list or a tuple.')
 
         # Increase our internal counter
-        cls.nested_count += 1
+        # DEV: Keep count on our base class so the `nested_count` is "global" for all subclasses
+        FixtureManager.nested_count += 1
 
         # If HTTPretty hasn't been started yet, then reset its info and start it
         if not HTTPretty.is_enabled():
@@ -150,15 +151,15 @@ class FixtureManager(object):
     def stop(cls):
         """Stop running this class' fixtures"""
         # Decrease our counter
-        cls.nested_count -= 1
+        FixtureManager.nested_count -= 1
 
         # If we have stopped running too many times, complain and leave
-        if cls.nested_count < 0:
+        if FixtureManager.nested_count < 0:
             raise RuntimeError('When running `httpretty-fixtures`, `stop()`'
                                'was run more times than (or before) `start()`')
 
         # If we have gotten out of nesting, then stop HTTPretty and
-        if cls.nested_count == 0:
+        if FixtureManager.nested_count == 0:
             HTTPretty.disable()
 
 
