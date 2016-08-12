@@ -186,7 +186,7 @@ class TestHttprettyFixtures(TestCase):
 
         # Start one of our FixtureManagers
         FakeServer.start(['hello'])
-        self.assertEqual(FakeServer.disable_when_done, False)
+        self.assertEqual(FakeServer.httpretty_enabled_at_start, True)
         self.assertEqual(httpretty.is_enabled(), True)
 
         # Stop out FixtureManger and ensure HTTPretty is still running
